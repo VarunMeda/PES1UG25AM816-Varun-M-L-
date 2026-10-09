@@ -44,12 +44,14 @@ class Board:
         self.selected = None
         self.score = 0
         self.moves_remaining = max_moves
+        self.cascade_count = 0
         self.reset()
 
     def reset(self):
         self.score = 0
         self.moves_remaining = self.max_moves
         self.selected = None
+        self.cascade_count = 0
         for r in range(GRID_SIZE):
             for c in range(GRID_SIZE):
                 color = random.choice(GEM_COLORS)
@@ -58,6 +60,7 @@ class Board:
                 self.grid[r][c] = gem
 
         self.resolve_matches()
+        self.cascade_count = 0
 
     def is_animating(self):
         for r in range(GRID_SIZE):
@@ -132,13 +135,17 @@ class Board:
                 gem.current_y = -((empty_slots - r) * TILE_SIZE)
                 self.grid[r][c] = gem
 
-    def resolve_matches(self):
+    def resolve_matches(self, score_cascades=False):
         total_cleared = 0
+        self.cascade_count = 0
         while True:
             matches = self.find_matches()
             if not matches:
                 break
+            self.cascade_count += 1
             total_cleared += len(matches)
+            if score_cascades:
+                self.score += len(matches) * 10 * self.cascade_count
             for r, c in matches:
                 self.grid[r][c] = None
             self.drop_and_refill()
@@ -156,8 +163,7 @@ class Board:
             return False
 
         self.moves_remaining -= 1
-        cleared = self.resolve_matches()
-        self.score += cleared * 10
+        self.resolve_matches(score_cascades=True)
         return True
 
     def is_game_over(self):
