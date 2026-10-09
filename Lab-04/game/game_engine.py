@@ -1,6 +1,8 @@
 import pygame
 from game.board import Board, GRID_SIZE, TILE_SIZE
 
+HINT_DELAY_MS = 5000
+
 
 class GameEngine:
     def __init__(self, width, height):
@@ -13,8 +15,17 @@ class GameEngine:
 
         self.font_big = pygame.font.SysFont(None, 48)
         self.font_small = pygame.font.SysFont(None, 24)
+        self.last_input_time = pygame.time.get_ticks()
+        self.hint_pair = None
+        self.hint_search_completed = False
+
+    def _register_input(self):
+        self.last_input_time = pygame.time.get_ticks()
+        self.hint_pair = None
+        self.hint_search_completed = False
 
     def handle_click(self, mouse_pos):
+        self._register_input()
         if self.board.is_game_over() or self.board.is_animating():
             return
 
@@ -38,9 +49,19 @@ class GameEngine:
 
     def reset(self):
         self.board.reset()
+        self._register_input()
 
     def update(self):
         self.board.update()
+
+        if self.board.is_game_over() or self.board.is_animating():
+            self.hint_pair = None
+            return
+
+        elapsed = pygame.time.get_ticks() - self.last_input_time
+        if elapsed > HINT_DELAY_MS and not self.hint_search_completed:
+            self.hint_pair = self.board.find_hint_swap()
+            self.hint_search_completed = True
 
     def render(self, screen):
         screen.fill((32, 34, 40))
@@ -55,6 +76,8 @@ class GameEngine:
         screen.blit(hud_surf, (self.width // 2 - hud_surf.get_width() // 2, 55))
 
         self.board.render(screen)
+        if self.hint_pair and not self.board.is_game_over():
+            self.board.render_hint(screen, self.hint_pair)
 
         inst_surf = self.font_small.render(
             "Swap gems to match 3+. Press [R] to Restart.",

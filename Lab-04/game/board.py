@@ -92,6 +92,34 @@ class Board:
         r2, c2 = pos2
         return abs(r1 - r2) + abs(c1 - c2) == 1
 
+    def swap_creates_match(self, pos1, pos2):
+        if not self.is_adjacent(pos1, pos2):
+            return False
+
+        r1, c1 = pos1
+        r2, c2 = pos2
+        if self.grid[r1][c1] is None or self.grid[r2][c2] is None:
+            return False
+
+        self.grid[r1][c1], self.grid[r2][c2] = self.grid[r2][c2], self.grid[r1][c1]
+        try:
+            return bool(self.find_matches())
+        finally:
+            self.grid[r1][c1], self.grid[r2][c2] = self.grid[r2][c2], self.grid[r1][c1]
+
+    def find_hint_swap(self):
+        if self.is_game_over() or self.is_animating():
+            return None
+
+        for r in range(GRID_SIZE):
+            for c in range(GRID_SIZE):
+                for other in ((r, c + 1), (r + 1, c)):
+                    if other[0] < GRID_SIZE and other[1] < GRID_SIZE:
+                        pair = ((r, c), other)
+                        if self.swap_creates_match(*pair):
+                            return pair
+        return None
+
     def find_match_groups(self):
         groups = []
 
@@ -162,13 +190,14 @@ class Board:
             self.cascade_count += 1
 
             special_position = None
-            if create_special and self.cascade_count == 1:
+            has_activating_special = any(
+                self.grid[r][c].special_type for r, c in matches
+            )
+            if create_special and self.cascade_count == 1 and not has_activating_special:
                 groups = self.find_match_groups()
                 special_groups = [
                     group for group in groups
-                    if len(group[0]) >= 4 and not any(
-                        self.grid[r][c].special_type for r, c in group[0]
-                    )
+                    if len(group[0]) >= 4
                 ]
                 if special_groups:
                     positions, orientation = max(
@@ -291,3 +320,18 @@ class Board:
                     pygame.draw.rect(
                         surface, (255, 255, 255), sel_rect, width=4, border_radius=10
                     )
+
+    def render_hint(self, surface, hint_pair):
+        pulse = (pygame.time.get_ticks() % 1000) / 1000
+        pulse = 0.5 + 0.5 * (1 - abs(2 * pulse - 1))
+        width = 2 + int(pulse * 3)
+        color = (255, 230 + int(pulse * 25), 100)
+
+        for r, c in hint_pair:
+            rect = pygame.Rect(
+                self.offset_x + c * TILE_SIZE + 4,
+                self.offset_y + r * TILE_SIZE + 4,
+                TILE_SIZE - 8,
+                TILE_SIZE - 8,
+            )
+            pygame.draw.rect(surface, color, rect, width=width, border_radius=10)
