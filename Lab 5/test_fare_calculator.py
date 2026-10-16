@@ -3,7 +3,7 @@
 import sys
 import unittest
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).parent))
 import fare_calculator as fare  # noqa: E402
@@ -56,9 +56,6 @@ class FareCalculatorTests(unittest.TestCase):
     @patch("fare_calculator.paramiko.SSHClient")
     def test_ssh_requires_host_key_verification(self, ssh_client):
         client = ssh_client.return_value
-        client.get_transport.return_value = MagicMock()
-        channel = client.get_transport.return_value.open_session.return_value
-        channel.recv_exit_status.return_value = 0
         sftp = client.open_sftp.return_value.__enter__.return_value
         fare.push_fares_to_gate("gate.example", "fares.txt", "known_hosts")
         client.load_host_keys.assert_called_once_with("known_hosts")
@@ -68,6 +65,7 @@ class FareCalculatorTests(unittest.TestCase):
             fare.paramiko.RejectPolicy,
         )
         sftp.put.assert_called_once_with("fares.txt", "/var/lib/transit-fares.txt")
+        client.get_transport.assert_not_called()
 
 
 if __name__ == "__main__":

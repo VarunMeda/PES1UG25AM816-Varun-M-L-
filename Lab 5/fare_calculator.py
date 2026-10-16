@@ -189,7 +189,7 @@ def load_stops(xml_text: str) -> list[str]:
 def push_fares_to_gate(
     gate_host: str, fare_file: str, known_hosts_path: str | None = None
 ) -> None:
-    """Upload a fare file using verified SSH host keys and a fixed command."""
+    """Deploy a fare file using verified SSH host keys and SFTP only."""
     client = paramiko.SSHClient()
     if known_hosts_path:
         client.load_host_keys(known_hosts_path)
@@ -201,16 +201,6 @@ def push_fares_to_gate(
         remote_file = "/var/lib/transit-fares.txt"
         with client.open_sftp() as sftp:
             sftp.put(fare_file, remote_file)
-        transport = client.get_transport()
-        if transport is None:
-            raise RuntimeError("SSH transport was not established")
-        channel = transport.open_session()
-        channel.exec_command("install_fares /var/lib/transit-fares.txt")
-        exit_status = channel.recv_exit_status()
-        if exit_status != 0:
-            raise RuntimeError(
-                f"remote fare installation failed: {exit_status}"
-            )
     finally:
         client.close()
 

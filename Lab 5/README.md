@@ -62,7 +62,7 @@ card to become negative, and received a 5.80/10 Pylint score. The corrected
 program caps the total at `150`, validates card operations, and uses safe XML
 parsing, SHA-256, verified SSH host keys, and SFTP upload.
 
-The test suite ran 8 tests successfully. The final Pylint score is 10.00/10
-and Flake8 reports no findings. Bandit has one conservative B601 warning for
-Paramiko's required `exec_command` API; the command is fixed and contains no
-user-controlled input.
+The test suite ran 8 tests successfully. The final Pylint score is 10.00/10,
+Flake8 reports no findings, and the final Bandit report contains no findings.
+Fare deployment uses SFTP to a fixed destination and does not invoke a remote
+shell.

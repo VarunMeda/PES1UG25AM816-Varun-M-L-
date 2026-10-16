@@ -6,11 +6,11 @@ Static code analysis examines source code without executing every path. It quick
 
 ## 2. What Pylint, Bandit, and Flake8 contribute
 
-Pylint checked naming, documentation, unused code, and suspicious constructs. Bandit focused on security-sensitive APIs, identifying MD5, unsafe XML parsing, automatic SSH host-key trust, and the Paramiko command call. Flake8 enforced smaller style rules such as blank lines, unused imports, lambda assignment, and line length. They overlap usefully, but none replaces the others.
+Pylint checked naming, documentation, unused code, and suspicious constructs. Bandit focused on security-sensitive APIs, identifying MD5, unsafe XML parsing, automatic SSH host-key trust, and the Paramiko shell command. Flake8 enforced smaller style rules such as blank lines, unused imports, lambda assignment, and line length. They overlap usefully, but none replaces the others.
 
 ## 3. Issues fixed and resulting improvements
 
-The final code uses `defusedxml`, SHA-256, verified SSH host keys, SFTP upload, validated inputs, immutable defaults, and a real daily cap. It also prevents unknown-card and insufficient-balance operations. The original Pylint score was 5.80/10; the final score is 10.00/10. Flake8 went from 20 findings to zero. Bandit went from five findings to one conservative B601 report: Paramiko's `exec_command` remains necessary for the fixed remote installer command, but no user-controlled string is interpolated into it.
+The final code uses `defusedxml`, SHA-256, verified SSH host keys, SFTP-only deployment, validated inputs, immutable defaults, and a real daily cap. It also prevents unknown-card and insufficient-balance operations. The original Pylint score was 5.80/10; the final score is 10.00/10. Flake8 went from 20 findings to zero. Bandit went from five findings to zero because the remote shell call was removed entirely.
 
 ## 4. Limitations of static analysis and need for runtime testing
 
